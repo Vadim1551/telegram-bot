@@ -1,0 +1,78 @@
+version: "3.8"
+services:
+  tg_bot:
+    container_name: tg_bot
+    build: ./bot
+    depends_on:
+     - db_main
+    environment:
+      - TOKEN=${TOKEN}
+      - CHAT_ID=${CHAT_ID}
+      - SSH_PASSWORD=${SSH_PASSWORD}
+      - SSH_USER=${SSH_USER}
+      - SSH_HOST=${SSH_HOST}
+      - SSH_PORT=${SSH_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PORT=${DB_PORT}
+      - DB_HOST=${DB_HOST}
+    volumes:
+      - pg_main_data:/app/pg_data
+    networks:
+      mynet:
+        ipv4_address: 10.5.0.2
+
+  db_main:
+    container_name: db_main
+    build: ./main_db
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - REPL_DB_USER=${REPL_DB_USER}
+      - REPL_DB_PASSWORD=${REPL_DB_PASSWORD}
+      - REPL_DB_PORT=${REPL_DB_PORT}
+      - REPL_DB_HOST=${REPL_DB_HOST}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_main_data:/var/lib/postgresql/data
+    networks:
+      mynet:
+        ipv4_address: 10.5.0.3
+
+
+  db_repl:
+    container_name: db_repl
+    build: ./replica_db
+    depends_on:
+     - db_main
+    environment:
+      - POSTGRES_USER=${REPL_DB_USER}
+      - POSTGRES_PASSWORD=${REPL_DB_PASSWORD}
+      - POSTGRES_DB=${REPL_DB_NAME}
+      - DB_HOST=${DB_HOST}
+    command:
+      - "postgres"
+      - "-c"
+      - "listen_addresses=${REPL_DB_HOST}"
+    volumes:
+      - pg_repl_data:/var/lib/postgresql/data
+    ports:
+      - "5431:5432"
+    networks:
+      mynet:
+        ipv4_address: 10.5.0.4
+
+networks:
+  mynet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: "10.5.0.0/24"
+
+volumes:
+  pg_repl_data:
+  pg_main_data:
