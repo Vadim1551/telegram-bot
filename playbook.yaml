@@ -41,9 +41,7 @@
       copy:
         src: .env
         dest: /tg_project/bot/.env
-        owner: ansible            # Вы можете указать владельца файла
-        group: ansible           # Группу файла
-        mode: '0755'               # Права файла (по умолчанию Ansible использует 0644, если не указать mode)
+        mode: 0755               # Права файла (по умолчанию Ansible использует 0644, если не указать mode)
 
     - name: Create directory and set ownership
       ansible.builtin.shell: |
@@ -99,7 +97,7 @@
         port: 5432
         timeout: 300
         state: started
-        delay: 10
+        delay: 3
 
     - name: Run a simple Bash command
       ansible.builtin.command: chmod +x /tg_project/bot/init.sh
@@ -124,7 +122,7 @@
       register: job_result_pip
       until: job_result_pip.finished
       retries: 30
-      delay: 10
+      delay: 5
 
     - name: Run a simple Bash command
       ansible.builtin.command: chmod +x /tg_project/bot/main.py
