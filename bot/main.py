@@ -260,20 +260,20 @@ def getReplLogs(update: Update, context):
         # Перебираем все элементы в директории
         for entry in os.listdir(PATH_LOGS):
             # Соединяем путь директории с именем файла или папки
-            full_path = os.path.join('pg_data/logs', entry)
+            full_path = os.path.join(PATH_LOGS, entry)
             # Проверяем, является ли элемент файлом
             if os.path.isfile(full_path):
                 files.append(entry)
     except Exception as e:
         update.message.reply_text(text)
         logger.info(e)
-        return e
+        text = e
 
     for filename in files:
         try:
-            with open(f'pg_data/logs/{filename}', 'r') as file:
+            with open(f'{PATH_LOGS}/{filename}', 'r') as file:
                 for line in file:
-                    if 'replication' in line:
+                    if 'replication' in line or 'REPLICATION' in line:
                         text += line + '\n'
         except Exception as e:
             text = e
