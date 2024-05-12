@@ -13,7 +13,7 @@
           - python3-pip
           - python3-venv
           - git
-          - postgresql
+          - postgresql-14
           - postgresql-contrib
         state: latest
 
@@ -31,11 +31,6 @@
         update: yes
 
   tasks:
-    - name: "Find out if PostgreSQL is initialized"
-      ansible.builtin.stat:
-        path: "/var/lib/pgsql/data/pg_hba.conf"
-      register: postgres_data
-
     - name: Copy init.sh script to remote host
       copy:
         src: init.sh
@@ -75,7 +70,7 @@
 
     - name: Ensure replication entry in pg_hba.conf
       community.postgresql.postgresql_pg_hba:
-        dest: "/etc/postgresql/16/main/pg_hba.conf"
+        dest: "/etc/postgresql/14/main/pg_hba.conf"
         contype: host
         databases: replication
         users: repl_user
@@ -87,7 +82,7 @@
 
     - name: Ensure loacl connection md5 entry in pg_hba.conf
       community.postgresql.postgresql_pg_hba:
-        dest: "/etc/postgresql/16/main/pg_hba.conf"
+        dest: "/etc/postgresql/14/main/pg_hba.conf"
         contype: local
         databases: all
         users: all
@@ -98,7 +93,7 @@
 
     - name: Ensure loacl connection postgres md5 entry in pg_hba.conf
       community.postgresql.postgresql_pg_hba:
-        dest: "/etc/postgresql/16/main/pg_hba.conf"
+        dest: "/etc/postgresql/14/main/pg_hba.conf"
         contype: local
         databases: all
         users: postgres
