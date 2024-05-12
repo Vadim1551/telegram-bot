@@ -1,0 +1,64 @@
+- name: Setup PostgreSQL and Telegram Bot
+  hosts: telegram_bot
+  become: yes
+  vars:
+    postgresql_version: 14
+    postgresql_encoding: "UTF8"
+    postgresql_locale: "C.UTF-8"
+    postgresql_replication_user: "${REPL_DB_USER}"
+    postgresql_replication_password: "${REPL_DB_PASSWORD}"
+    git_repo: "https://github.com/Vadim1551/telegram-bot.git"
+    python_executable: "/usr/bin/python3"
+    virtualenv_path: "~/tg_bot_venv"
+    postgresql_python_library: python-psycopg2
+    postgresql_restarted_state: "restarted"
+
+  tasks:
+    - name: Ensure Python and Git are installed
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+          - git
+        state: latest
+
+    - name: Install PostgreSQL
+      include_role:
+        name: ANXS.postgresql
+      vars:
+        postgresql_databases:
+          - name: ${DB_NAME}
+        postgresql_users:
+          - name: ${DB_USER}
+            pass: ${DB_PASSWORD}
+            encrypted: yes  # используются md5-зашифрованные пароли
+        postgresql_hba_entries:
+          - contype: host
+            users: ${REPL_DB_USER}
+            databases: ${REPL_DB_NAME}
+            address: '${REPL_DB_HOST}'
+            method: md5
+
+    - name: Clone Telegram Bot repo
+      git:
+        repo: "{{ git_repo }}"
+        dest: ~/bot
+        version: master
+
+    - name: Setup Python environment
+      shell: |
+        python3 -m venv {{ virtualenv_path }}
+        source {{ virtualenv_path }}/bin/activate
+        pip install -r ~/bot/requirements.txt
+      args:
+        executable: /bin/bash
+
+    - name: Run Telegram Bot
+      shell: |
+        source {{ virtualenv_path }}/bin/activate
+        python ~/telegram_bot/bot.py
+      args:
+        executable: /bin/bash
+      async: 15
+      poll: 0
