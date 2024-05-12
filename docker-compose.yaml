@@ -35,7 +35,7 @@ services:
       - REPL_DB_PORT=${REPL_DB_PORT}
       - REPL_DB_HOST=${REPL_DB_HOST}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - pg_main_data:/var/lib/postgresql/data
     networks:
@@ -60,7 +60,7 @@ services:
     volumes:
       - pg_repl_data:/var/lib/postgresql/data
     ports:
-      - "5431:5432"
+      - "${REPL_DB_PORT}:5432"
     networks:
       mynet:
         ipv4_address: 10.5.0.4
