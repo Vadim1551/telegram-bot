@@ -266,7 +266,7 @@ def getReplLogs(update: Update, context):
     except Exception as e:
         update.message.reply_text(text)
         logger.info(e)
-        return
+        return e
 
     for filename in files:
         try:
