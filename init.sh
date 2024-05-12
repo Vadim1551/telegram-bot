@@ -1,10 +1,10 @@
 #!/bin/bash
 
-source /tg_project/bot/.env
+source .env
 
 set -e
 
-psql -U postgres -d postgres -c "
+psql -U postgres -d postgres <<EOF
     DROP DATABASE IF EXISTS $DB_NAME;
     CREATE DATABASE $DB_NAME;
     DROP ROLE IF EXISTS $REPL_DB_USER;
@@ -25,4 +25,5 @@ psql -U postgres -d postgres -c "
     GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
     GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO $DB_USER;
     GRANT ALL PRIVILEGES ON emails, phones TO $DB_USER;
-"
+
+EOF

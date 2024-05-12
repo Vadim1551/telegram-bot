@@ -129,11 +129,13 @@
       become: yes
 
     - name: Run init.sh script on remote host
-      ansible.builtin.command: bash /tg_project/bot/init.sh
+      command: sudo bash ./init.sh
       become: true
       async: 300
       poll: 0
       register: init_script_result
+      args:
+        chdir: /tg_project/bot/
       become: true
 
     - name: Wait for init.sh script to finish
