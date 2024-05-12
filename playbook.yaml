@@ -88,25 +88,33 @@
       become: true
       become_user: postgres
 
-#    - name: Ensure loacl connection postgres md5 entry in pg_hba.conf
-#      community.postgresql.postgresql_pg_hba:
-#        dest: "/etc/postgresql/16/main/pg_hba.conf"
-#        contype: local
-#        databases: all
-#        users: postgres
-#        method: trust
-#        state: present
-#      become: true
-#      become_user: postgres
-
     - name: Ensure PostgreSQL is restarted to apply all changes
       ansible.builtin.systemd:
         name: postgresql
         state: restarted
         enabled: yes
 
+    - name: Wait for PostgreSQL to fully restart
+      ansible.builtin.wait_for:
+        port: 5432
+        timeout: 300
+        state: started
+        delay: 10
+
     - name: Run init.sh script on remote host
-      shell: /tg_project/bot/init.sh
+      ansible.builtin.command: chmod +x /tg_project/bot/init.sh && bash /tg_project/bot/init.sh
+      become: true
+      async: 300
+      poll: 0
+      register: init_script_result
+
+    - name: Wait for init.sh script to finish
+      ansible.builtin.async_status:
+        jid: "{{ init_script_result.ansible_job_id }}"
+      register: job_result
+      until: job_result.finished
+      retries: 30
+      delay: 10
 
     - name: Create a virtual environment
       ansible.builtin.command: python3 -m venv /tg_project/venv
@@ -118,14 +126,21 @@
         requirements: /tg_project/bot/requirements.txt
         virtualenv: /tg_project/venv
 
+    - name: Wait for requirements installation to finish
+      ansible.builtin.async_status:
+        jid: "{{ pip_install_result.ansible_job_id }}"
+      register: job_result_pip
+      until: job_result_pip.finished
+      retries: 30
+      delay: 10
+
     - name: Run a simple Bash command
-      shell: |
-        chmod +x /tg_project/bot/main.py
+      ansible.builtin.command: chmod +x /tg_project/bot/main.py
       become: yes
 
     - name: Run the bot script
       ansible.builtin.command: /tg_project/venv/bin/python3 /tg_project/bot/main.py
-      #async: 999999999999
-      #poll: 0
+      async: 999999999999
+      poll: 0
       become: yes
 
