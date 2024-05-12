@@ -130,21 +130,9 @@
 
     - name: Run init.sh script on remote host
       command: sudo bash ./init.sh
-      become: true
-      async: 300
-      poll: 0
-      register: init_script_result
       args:
         chdir: /tg_project/bot/
-      become: true
-
-    - name: Wait for init.sh script to finish
-      ansible.builtin.async_status:
-        jid: "{{ init_script_result.ansible_job_id }}"
-      register: job_result
-      until: job_result.finished
-      retries: 30
-      delay: 10
+      become_user: ansible
 
     - name: Run the bot script
       ansible.builtin.command: /tg_project/venv/bin/python3 /tg_project/bot/main.py
