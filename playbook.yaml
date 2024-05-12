@@ -36,62 +36,55 @@
         path: "/var/lib/pgsql/data/pg_hba.conf"
       register: postgres_data
 
-    - name: Drop specified users if they exist
-      become: true
-      become_user: postgres
-      postgresql_db:
-        name: "db_bot"
-        state: absent
-      become_user: postgres
+#    - name: "Create app database"
+#      postgresql_db:
+#        state: present
+#        name: "{{ db_name }}"
+#      become_user: postgres
 
-    - name: Drop specified users if they exist
-      become: true
-      become_user: postgres
-      postgresql_user:
-        name: "repl_user"
-        state: absent
-      become_user: postgres
+#    - name: Create my user
+#      postgresql_user:
+#        name: "{{ db_user }}"
+#        password: "{{ db_password }}"
+#        encrypted: yes
+#      become_user: postgres
 
-    - name: "Create app database"
-      postgresql_db:
-        state: present
-        name: "{{ db_name }}"
-      become_user: postgres
+    - name: Copy init.sh script to remote host
+      copy:
+        src: init.sh
+        dest: /tg_project/bot/init.sh
+        mode: 0755  # Set execute permission on the script
 
-    - name: Create my user
-      postgresql_user:
-        name: "{{ db_user }}"
-        password: "{{ db_password }}"
-        encrypted: yes
-      become_user: postgres
+    - name: Копируем файл .env в папку /bot
+      copy:
+        src: .env
+        dest: /tg_project/bot/.env
+        owner: ansible            # Вы можете указать владельца файла
+        group: ansible           # Группу файла
+        mode: '0755'               # Права файла (по умолчанию Ansible использует 0644, если не указать mode)
 
-    - name: Execute SQL script using postgres user
-      postgresql_query:
-        db: "{{ db_name }}"
-        session_role: "postgres"
-        path_to_script: /tg_project/main_db/init.sql
-      become_user: postgres
+    - name: Run init.sh script on remote host
+      shell: /tg_project/bot/init.sh
+#    - name: Grant ALL PRIVILEGES on database "{{ db_name }}"  to "{{ db_user }}"
+#      community.postgresql.postgresql_privs:
+#        db: "{{ db_name }}"
+#        state: present
+#        privs: ALL
+#        objs: ALL_IN_SCHEMA
+#        role: "{{ db_user }}"
+#      become_user: postgres
 
-    - name: Grant ALL PRIVILEGES on database "{{ db_name }}"  to "{{ db_user }}"
-      community.postgresql.postgresql_privs:
-        db: "{{ db_name }}"
-        state: present
-        privs: ALL
-        objs: ALL_IN_SCHEMA
-        role: "{{ db_user }}"
-      become_user: postgres
-
-    - name: Grant usage and select privileges on all sequences in public schema to www
-      community.postgresql.postgresql_privs:
-        db: "{{ db_name }}"
-        privs: ALL
-        type: table
-        objs: emails,phones
-        schema: public
-        role: "{{db_user}}"
-        state: present
-        grant_option: true
-      become_user: postgres
+#    - name: Grant usage and select privileges on all sequences in public schema to www
+#      community.postgresql.postgresql_privs:
+#        db: "{{ db_name }}"
+#        privs: ALL
+#        type: table
+#        objs: emails,phones
+#        schema: public
+#        role: "{{db_user}}"
+#        state: present
+#        grant_option: true
+#      become_user: postgres
 
     - name: Create directory and set ownership
       ansible.builtin.shell: |
@@ -163,15 +156,6 @@
         requirements: /tg_project/bot/requirements.txt
         virtualenv: /tg_project/venv
 
-    - name: Копируем файл .env в папку /bot
-      copy:
-        src: .env
-        dest: /tg_project/bot/.env
-        owner: ansible            # Вы можете указать владельца файла
-        group: ansible           # Группу файла
-        mode: '0755'               # Права файла (по умолчанию Ansible использует 0644, если не указать mode)
-      become: yes
-
     - name: Run a simple Bash command
       shell: |
         chmod +x /tg_project/bot/main.py
@@ -179,7 +163,7 @@
 
     - name: Run the bot script
       ansible.builtin.command: /tg_project/venv/bin/python3 /tg_project/bot/main.py
-      async: 999999999999
-      poll: 0
+      #async: 999999999999
+      #poll: 0
       become: yes
 
