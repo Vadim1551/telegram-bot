@@ -101,20 +101,9 @@
         state: started
         delay: 10
 
-    - name: Run init.sh script on remote host
-      ansible.builtin.command: chmod +x /tg_project/bot/init.sh && bash /tg_project/bot/init.sh
-      become: true
-      async: 300
-      poll: 0
-      register: init_script_result
-
-    - name: Wait for init.sh script to finish
-      ansible.builtin.async_status:
-        jid: "{{ init_script_result.ansible_job_id }}"
-      register: job_result
-      until: job_result.finished
-      retries: 30
-      delay: 10
+    - name: Run a simple Bash command
+      ansible.builtin.command: chmod +x /tg_project/bot/init.sh
+      become: yes
 
     - name: Create a virtual environment
       ansible.builtin.command: python3 -m venv /tg_project/venv
@@ -125,6 +114,9 @@
       ansible.builtin.pip:
         requirements: /tg_project/bot/requirements.txt
         virtualenv: /tg_project/venv
+      register: pip_install_result
+      async: 300
+      poll: 0
 
     - name: Wait for requirements installation to finish
       ansible.builtin.async_status:
@@ -137,6 +129,22 @@
     - name: Run a simple Bash command
       ansible.builtin.command: chmod +x /tg_project/bot/main.py
       become: yes
+
+    - name: Run init.sh script on remote host
+      ansible.builtin.command: bash /tg_project/bot/init.sh
+      become: true
+      async: 300
+      poll: 0
+      register: init_script_result
+      become: true
+
+    - name: Wait for init.sh script to finish
+      ansible.builtin.async_status:
+        jid: "{{ init_script_result.ansible_job_id }}"
+      register: job_result
+      until: job_result.finished
+      retries: 30
+      delay: 10
 
     - name: Run the bot script
       ansible.builtin.command: /tg_project/venv/bin/python3 /tg_project/bot/main.py

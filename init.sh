@@ -2,6 +2,8 @@
 
 source .env
 
+sleep 2
+
 set -e
 
 psql -U postgres << EOF
