@@ -1,64 +1,137 @@
-- name: Setup PostgreSQL and Telegram Bot
-  hosts: telegram_bot
-  become: yes
-  vars:
-    postgresql_version: 14
-    postgresql_encoding: "UTF8"
-    postgresql_locale: "C.UTF-8"
-    postgresql_replication_user: "${REPL_DB_USER}"
-    postgresql_replication_password: "${REPL_DB_PASSWORD}"
-    git_repo: "https://github.com/Vadim1551/telegram-bot.git"
-    python_executable: "/usr/bin/python3"
-    virtualenv_path: "~/tg_bot_venv"
-    postgresql_python_library: python-psycopg2
-    postgresql_restarted_state: "restarted"
+- hosts: all
+  become: true
 
-  tasks:
+  vars_files:
+    - vars.yml
+
+  pre_tasks:
     - name: Ensure Python and Git are installed
       apt:
         name:
+          - libpq-dev
           - python3
           - python3-pip
           - python3-venv
           - git
         state: latest
 
-    - name: Install PostgreSQL
-      include_role:
-        name: ANXS.postgresql
-      vars:
-        postgresql_databases:
-          - name: ${DB_NAME}
-        postgresql_users:
-          - name: ${DB_USER}
-            pass: ${DB_PASSWORD}
-            encrypted: yes  # используются md5-зашифрованные пароли
-        postgresql_hba_entries:
-          - contype: host
-            users: ${REPL_DB_USER}
-            databases: ${REPL_DB_NAME}
-            address: '${REPL_DB_HOST}'
-            method: md5
+    - name: "Install packages"
+      dnf: "name={{ item }} state=present"
+      with_items:
+        - postgresql
+        - postgresql-contrib
 
-    - name: Clone Telegram Bot repo
-      git:
-        repo: "{{ git_repo }}"
-        dest: ~/bot
-        version: master
+    - name: "Install Python packages"
+      pip: "name={{ item }}  state=present"
+      with_items:
+        - psycopg2-binary
 
-    - name: Setup Python environment
-      shell: |
-        python3 -m venv {{ virtualenv_path }}
-        source {{ virtualenv_path }}/bin/activate
-        pip install -r ~/bot/requirements.txt
-      args:
-        executable: /bin/bash
+  tasks:
+    - name: "Find out if PostgreSQL is initialized"
+      ansible.builtin.stat:
+        path: "/var/lib/pgsql/data/pg_hba.conf"
+      register: postgres_data
 
-    - name: Run Telegram Bot
-      shell: |
-        source {{ virtualenv_path }}/bin/activate
-        python ~/telegram_bot/bot.py
-      args:
-        executable: /bin/bash
-      async: 15
-      poll: 0
+    - name: "Initialize PostgreSQL"
+      shell: "postgresql-setup initdb"
+      when: not postgres_data.stat.exists
+
+    - name: "Start and enable services"
+      service: "name={{ item }} state=started enabled=yes"
+      with_items:
+        - postgresql
+
+    - name: "Create app database"
+      postgresql_db:
+        state: present
+        name: "{{ db_name }}"
+      become: true
+      become_user: postgres
+
+    - name: "Create db user"
+      postgresql_user:
+        state: present
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+      become: true
+      become_user: postgres
+
+    - name: "Grant db user access to app db"
+      postgresql_privs:
+        type: database
+        database: "{{ db_name }}"
+        roles: "{{ db_user }}"
+        grant_option: no
+        privs: all
+      become: true
+      become_user: postgres
+
+    - name: "Create repl_user"
+      postgresql_user:
+        state: present
+        name: "{{ repl_user }}"
+        password: "{{ repl_password }}"
+      become: true
+      become_user: postgres
+
+    - name: Create directory and set ownership
+      ansible.builtin.shell: |
+        mkdir -p /oracle/pg_data/archive
+        chown -R postgres:postgres /oracle
+
+    - name: Update PostgreSQL configuration
+      community.general.postgresql_set:
+        name: "{{ item.name }}"
+        value: "{{ item.value }}"
+        state: present
+        reload: yes
+      loop:
+        - { name: "listen_addresses", value: "'*'" }
+        - { name: "archive_mode", value: "on" }
+        - { name: "archive_command", value: "'cp %p /oracle/pg_data/archive/%f'" }
+        - { name: "max_wal_senders", value: "10" }
+        - { name: "wal_level", value: "replica" }
+        - { name: "wal_log_hints", value: "on" }
+        - { name: "log_replication_commands", value: "on" }
+      become: yes
+      become_user: postgres
+
+    - name: Ensure replication entry in pg_hba.conf
+      community.postgresql.postgresql_pg_hba:
+        dest: "{{ /etc/postgresql/14/main/pg_hba.conf }}"
+        contype: host
+        databases: replication
+        users: repl_user
+        addresses: ['{{ repl_db_host }}/24']
+        method: scram-sha-256
+        state: present
+      become: true
+      become_user: postgres
+
+    - name: Ensure PostgreSQL is restarted to apply all changes
+      ansible.builtin.systemd:
+        name: postgresql
+        state: restarted
+        enabled: yes
+
+    - name: Stop PostgreSQL service
+      ansible.builtin.systemd:
+        name: postgresql
+        state: stopped
+
+    - name: Run pg_basebackup with environment variables
+      ansible.builtin.shell: |
+        PGPASSWORD="{{ repl_password }}" pg_basebackup -R -h "{{ repl_host }}" -U "{{ repl_user }}" -D /var/lib/postgresql/14/main -P
+      environment:
+        PGPASSWORD: "{{ repl_password }}"
+      register: backup_result
+      changed_when: "'base backup successful' in backup_result.stdout"
+
+    - name: Start PostgreSQL service
+      ansible.builtin.systemd:
+        name: postgresql
+        state: started
+
+  handlers:
+    - name: restart postgres
+      service: name=postgresql state=restarted
