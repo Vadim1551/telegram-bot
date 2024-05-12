@@ -15,6 +15,7 @@ HOST = os.getenv('SSH_HOST')
 PORT = os.getenv('SSH_PORT')
 USERNAME = os.getenv('SSH_USER')
 PASSWORD = os.getenv('SSH_PASSWORD')
+PATH_LOGS = os.getenv('PATH_TO_LOGS')
 allowed_commands = {'release': 'lsb_release -a',
                     'uname': 'uname -a',
                     'uptime': 'uptime',
@@ -257,7 +258,7 @@ def getReplLogs(update: Update, context):
     text = ''
     try:
         # Перебираем все элементы в директории
-        for entry in os.listdir('pg_data/logs'):
+        for entry in os.listdir(PATH_LOGS):
             # Соединяем путь директории с именем файла или папки
             full_path = os.path.join('pg_data/logs', entry)
             # Проверяем, является ли элемент файлом
