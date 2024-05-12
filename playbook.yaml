@@ -13,7 +13,7 @@
           - python3-pip
           - python3-venv
           - git
-          - postgresql-14
+          - postgresql
           - postgresql-contrib
         state: latest
 
@@ -45,9 +45,6 @@
         group: ansible           # Группу файла
         mode: '0755'               # Права файла (по умолчанию Ansible использует 0644, если не указать mode)
 
-    - name: Run init.sh script on remote host
-      shell: /tg_project/bot/init.sh
-
     - name: Create directory and set ownership
       ansible.builtin.shell: |
         mkdir -p /oracle/pg_data/archive
@@ -70,43 +67,46 @@
 
     - name: Ensure replication entry in pg_hba.conf
       community.postgresql.postgresql_pg_hba:
-        dest: "/etc/postgresql/14/main/pg_hba.conf"
+        dest: "/etc/postgresql/16/main/pg_hba.conf"
         contype: host
         databases: replication
         users: repl_user
-        address: '{{ repl_db_host }}/24'
-        method: scram-sha-256
+        address: '{{ repl_db_host }}/32'
+        method: md5
         state: present
       become: true
       become_user: postgres
 
     - name: Ensure loacl connection md5 entry in pg_hba.conf
       community.postgresql.postgresql_pg_hba:
-        dest: "/etc/postgresql/14/main/pg_hba.conf"
+        dest: "/etc/postgresql/16/main/pg_hba.conf"
         contype: local
         databases: all
         users: all
-        method: md5
-        state: present
-      become: true
-      become_user: postgres
-
-    - name: Ensure loacl connection postgres md5 entry in pg_hba.conf
-      community.postgresql.postgresql_pg_hba:
-        dest: "/etc/postgresql/14/main/pg_hba.conf"
-        contype: local
-        databases: all
-        users: postgres
         method: trust
         state: present
       become: true
       become_user: postgres
+
+#    - name: Ensure loacl connection postgres md5 entry in pg_hba.conf
+#      community.postgresql.postgresql_pg_hba:
+#        dest: "/etc/postgresql/16/main/pg_hba.conf"
+#        contype: local
+#        databases: all
+#        users: postgres
+#        method: trust
+#        state: present
+#      become: true
+#      become_user: postgres
 
     - name: Ensure PostgreSQL is restarted to apply all changes
       ansible.builtin.systemd:
         name: postgresql
         state: restarted
         enabled: yes
+
+    - name: Run init.sh script on remote host
+      shell: /tg_project/bot/init.sh
 
     - name: Create a virtual environment
       ansible.builtin.command: python3 -m venv /tg_project/venv
