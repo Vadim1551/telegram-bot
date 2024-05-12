@@ -36,26 +36,13 @@
         path: "/var/lib/pgsql/data/pg_hba.conf"
       register: postgres_data
 
-#    - name: "Create app database"
-#      postgresql_db:
-#        state: present
-#        name: "{{ db_name }}"
-#      become_user: postgres
-
-#    - name: Create my user
-#      postgresql_user:
-#        name: "{{ db_user }}"
-#        password: "{{ db_password }}"
-#        encrypted: yes
-#      become_user: postgres
-
     - name: Copy init.sh script to remote host
       copy:
         src: init.sh
         dest: /tg_project/bot/init.sh
         mode: 0755  # Set execute permission on the script
 
-    - name: Копируем файл .env в папку /bot
+    - name: Копируем файл .env в папку /tg_project/bot
       copy:
         src: .env
         dest: /tg_project/bot/.env
@@ -65,26 +52,6 @@
 
     - name: Run init.sh script on remote host
       shell: /tg_project/bot/init.sh
-#    - name: Grant ALL PRIVILEGES on database "{{ db_name }}"  to "{{ db_user }}"
-#      community.postgresql.postgresql_privs:
-#        db: "{{ db_name }}"
-#        state: present
-#        privs: ALL
-#        objs: ALL_IN_SCHEMA
-#        role: "{{ db_user }}"
-#      become_user: postgres
-
-#    - name: Grant usage and select privileges on all sequences in public schema to www
-#      community.postgresql.postgresql_privs:
-#        db: "{{ db_name }}"
-#        privs: ALL
-#        type: table
-#        objs: emails,phones
-#        schema: public
-#        role: "{{db_user}}"
-#        state: present
-#        grant_option: true
-#      become_user: postgres
 
     - name: Create directory and set ownership
       ansible.builtin.shell: |
