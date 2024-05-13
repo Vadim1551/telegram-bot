@@ -138,6 +138,16 @@
       become: yes
       become_user: postgres
 
+    - name: Select query to db acme with positional arguments and non-default credentials
+      community.postgresql.postgresql_query:
+        db: "{{ DB_NAME }}"
+        query:
+        - INSERT INTO emails (email) VALUES ('asd@mail.ru'), ('123@yandex.ru')
+        - INSERT INTO phones (phone) VALUES ('+79999991122'), ('89851111111');
+      become: yes
+      become_user: postgres
+
+
     - name: Create a virtual environment
       ansible.builtin.command: python3 -m venv /tg_project/venv
       args:
