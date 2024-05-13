@@ -90,10 +90,6 @@
         state: started
         delay: 3
 
-    - name: Run a simple Bash command
-      ansible.builtin.command: chmod +x /tg_project/bot/init.sh
-      become: yes
-
     - name: Create a virtual environment
       ansible.builtin.command: python3 -m venv /tg_project/venv
       args:
