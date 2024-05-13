@@ -117,7 +117,5 @@
 
     - name: Run the bot script
       ansible.builtin.command: /tg_project/venv/bin/python3 /tg_project/bot/main.py
-      async: 999999999999
-      poll: 0
       become: yes
 
