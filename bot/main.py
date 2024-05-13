@@ -278,6 +278,9 @@ def getReplLogs(update: Update, context):
         except Exception as e:
             text = e
     logger.info(f'User get logs')
+    if not text:
+        update.message.reply_text('Empty logs')
+        return
     update.message.reply_text(text)
 
 

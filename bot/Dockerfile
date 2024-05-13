@@ -30,6 +30,7 @@ ENV SSH_HOST=""
 ENV SSH_USER=""
 ENV SSH_PASSWORD=""
 ENV SSH_PORT=""
+ENV PATH_TO_LOGS=""
 
 # Команда для запуска приложения
 CMD ["python", "main.py"]

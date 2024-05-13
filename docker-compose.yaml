@@ -17,8 +17,9 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_PORT=${DB_PORT}
       - DB_HOST=${DB_HOST}
+      - PATH_TO_LOGS=${PATH_TO_LOGS}
     volumes:
-      - pg_main_data:/app/var/log/postgresql
+      - pg_main_data:/app/logs
     networks:
       mynet:
         ipv4_address: 10.5.0.2
@@ -35,9 +36,9 @@ services:
       - REPL_DB_PORT=${REPL_DB_PORT}
       - REPL_DB_HOST=${REPL_DB_HOST}
     ports:
-      - "${DB_PORT}:5432"
+      - "5432:5432"
     volumes:
-      - pg_main_data:/var/lib/postgresql/data
+      - pg_main_data:/var/log/postgresql
     networks:
       mynet:
         ipv4_address: 10.5.0.3
@@ -60,7 +61,7 @@ services:
     volumes:
       - pg_repl_data:/var/lib/postgresql/data
     ports:
-      - "${REPL_DB_PORT}:5432"
+      - "5431:5432"
     networks:
       mynet:
         ipv4_address: 10.5.0.4

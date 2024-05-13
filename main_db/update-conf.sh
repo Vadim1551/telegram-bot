@@ -16,7 +16,7 @@ if [ -f "$CONFIG_FILE" ]; then
     sed -i 's/^#archive_mode.*/archive_mode = on/' $CONFIG_FILE
     sed -i "s|^#archive_command.*|archive_command = 'cp %p /oracle/pg_data/archive/%f'|" $CONFIG_FILE
     sed -i 's/^#log_replication_commands.*/log_replication_commands = on/' $CONFIG_FILE
-    sed -i "s|^#log_directory.*|log_directory = '/var/lib/postgresql/data/logs'|" $CONFIG_FILE
+    sed -i "s|^#log_directory.*|log_directory = '/var/log/postgresql'|" $CONFIG_FILE
     sed -i 's/^#logging_collector.*/logging_collector = on/' $CONFIG_FILE
 fi
 
