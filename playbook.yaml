@@ -1,11 +1,11 @@
-- hosts: all
+- hosts: telegram_bot
   become: true
 
-  vars_files:
-    - vars.yml
+#  vars_files:
+#    - vars.yml
 
   pre_tasks:
-    - name: Ensure Python and Git are installed
+    - name: Install apt packages
       apt:
         name:
           - libpq-dev
@@ -17,12 +17,12 @@
           - postgresql-contrib
         state: latest
 
-    - name: "Install Python packages"
+    - name: Install Python packages
       pip: "name={{ item }}  state=present"
       with_items:
         - psycopg2-binary
 
-    - name: Clone bot repository
+    - name: Clone git docker branch repository
       git:
         repo: 'https://github.com/Vadim1551/telegram-bot.git'
         dest: '/tg_project'
@@ -37,7 +37,7 @@
         dest: /tg_project/bot/init.sh
         mode: 0755  # Set execute permission on the script
 
-    - name: Копируем файл .env в папку /tg_project/bot
+    - name: Copy .env to /tg_project/bot
       copy:
         src: .env
         dest: /tg_project/bot/.env
@@ -63,17 +63,17 @@
       become: true
       become_user: postgres
 
-    - name: Ensure replication entry in pg_hba.conf
-      community.postgresql.postgresql_pg_hba:
-        dest: "/etc/postgresql/16/main/pg_hba.conf"
-        contype: host
-        databases: replication
-        users: repl_user
-        address: '{{ repl_db_host }}/32'
-        method: md5
-        state: present
-      become: true
-      become_user: postgres
+#    - name: Ensure replication entry in pg_hba.conf
+#      community.postgresql.postgresql_pg_hba:
+#        dest: "/etc/postgresql/16/main/pg_hba.conf"
+#        contype: host
+#        databases: replication
+#        users: "{{ REPL_DB_USER }}"
+#        address: '{{ REPL_DB_HOST }}/32'
+#        method: md5
+#        state: present
+#      become: true
+#      become_user: postgres
 
     - name: Ensure loacl connection md5 entry in pg_hba.conf
       community.postgresql.postgresql_pg_hba:
@@ -85,6 +85,12 @@
         state: present
       become: true
       become_user: postgres
+
+    - name: Run init.sh script on remote host
+      command: sudo bash ./init.sh
+      args:
+        chdir: /tg_project/bot/
+      become_user: ansible
 
     - name: Ensure PostgreSQL is restarted to apply all changes
       ansible.builtin.systemd:
@@ -124,15 +130,15 @@
       retries: 30
       delay: 5
 
-    - name: Run a simple Bash command
-      ansible.builtin.command: chmod +x /tg_project/bot/main.py
-      become: yes
+#    - name: Set execute priveleges to main.py
+#      ansible.builtin.command: chmod +x /tg_project/bot/main.py
+#      become: yes
 
-    - name: Run init.sh script on remote host
-      command: sudo bash ./init.sh
-      args:
-        chdir: /tg_project/bot/
-      become_user: ansible
+#    - name: Run init.sh script on remote host
+#      command: sudo bash ./init.sh
+#      args:
+#        chdir: /tg_project/bot/
+#      become_user: ansible
 
     - name: Run the bot script
       ansible.builtin.command: /tg_project/venv/bin/python3 /tg_project/bot/main.py

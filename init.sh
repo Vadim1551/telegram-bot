@@ -4,6 +4,11 @@ source .env
 
 set -e
 
+PG_HBA="/etc/postgresql/16/main/pg_hba.conf"
+
+# Добавление новой строки в конец файла pg_hba.conf
+echo "host replication ${REPL_DB_USER} ${REPL_DB_HOST}/32 md5" >> $PG_HBA
+
 psql -U postgres -d postgres <<EOF
     DROP DATABASE IF EXISTS $DB_NAME;
     CREATE DATABASE $DB_NAME;

@@ -1,6 +1,0 @@
-db_user: vadim
-db_password: 123
-db_name: db_bot
-repl_user: repl_user
-repl_password: 123
-repl_db_host: 192.168.1.68
