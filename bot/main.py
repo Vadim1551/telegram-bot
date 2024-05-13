@@ -281,8 +281,10 @@ def getReplLogs(update: Update, context):
     if not text:
         update.message.reply_text('Empty logs')
         return
-    update.message.reply_text(text)
-
+    max_length = 4000
+    chunks = [text[i:i+max_length] for i in range(0, len(text), max_length)]
+    for chunk in chunks:
+        update.message.reply_text(chunk)
 
 def main():
 
