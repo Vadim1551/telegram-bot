@@ -1,9 +1,6 @@
 - hosts: telegram_bot
   become: true
 
-#  vars_files:
-#    - vars.yml
-
   pre_tasks:
     - name: Install apt packages
       apt:
@@ -63,18 +60,6 @@
       become: true
       become_user: postgres
 
-#    - name: Ensure replication entry in pg_hba.conf
-#      community.postgresql.postgresql_pg_hba:
-#        dest: "/etc/postgresql/16/main/pg_hba.conf"
-#        contype: host
-#        databases: replication
-#        users: "{{ REPL_DB_USER }}"
-#        address: '{{ REPL_DB_HOST }}/32'
-#        method: md5
-#        state: present
-#      become: true
-#      become_user: postgres
-
     - name: Ensure loacl connection md5 entry in pg_hba.conf
       community.postgresql.postgresql_pg_hba:
         dest: "/etc/postgresql/16/main/pg_hba.conf"
@@ -129,16 +114,6 @@
       until: job_result_pip.finished
       retries: 30
       delay: 5
-
-#    - name: Set execute priveleges to main.py
-#      ansible.builtin.command: chmod +x /tg_project/bot/main.py
-#      become: yes
-
-#    - name: Run init.sh script on remote host
-#      command: sudo bash ./init.sh
-#      args:
-#        chdir: /tg_project/bot/
-#      become_user: ansible
 
     - name: Run the bot script
       ansible.builtin.command: /tg_project/venv/bin/python3 /tg_project/bot/main.py
