@@ -7,7 +7,6 @@ services:
      - db_main
     environment:
       - TOKEN=${TOKEN}
-      - CHAT_ID=${CHAT_ID}
       - SSH_PASSWORD=${SSH_PASSWORD}
       - SSH_USER=${SSH_USER}
       - SSH_HOST=${SSH_HOST}
@@ -33,7 +32,6 @@ services:
       - POSTGRES_DB=${DB_NAME}
       - REPL_DB_USER=${REPL_DB_USER}
       - REPL_DB_PASSWORD=${REPL_DB_PASSWORD}
-      - REPL_DB_PORT=${REPL_DB_PORT}
       - REPL_DB_HOST=${REPL_DB_HOST}
     ports:
       - "5432:5432"

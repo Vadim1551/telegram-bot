@@ -11,8 +11,7 @@ fi
 # Останавливаем PostgreSQL
 pg_ctl -D /var/lib/postgresql/data stop
 
-
-sleep 4
+sleep 5
 
 rm -rf /var/lib/postgresql/data/*
 pg_basebackup -R -h ${DB_HOST} -U ${POSTGRES_USER} -D /var/lib/postgresql/data -P
