@@ -20,7 +20,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Определяем переменные окружения
 ENV TOKEN=""
-ENV CHAT_ID=""
 ENV DB_HOST=""
 ENV DB_PORT=""
 ENV DB_NAME=""
