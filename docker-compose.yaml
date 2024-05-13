@@ -18,7 +18,7 @@ services:
       - DB_PORT=${DB_PORT}
       - DB_HOST=${DB_HOST}
     volumes:
-      - pg_main_data:/app/pg_data
+      - pg_main_data:/app/var/log/postgresql
     networks:
       mynet:
         ipv4_address: 10.5.0.2
