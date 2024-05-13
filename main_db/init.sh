@@ -1,7 +1,5 @@
 #!/bin/bash
 
-source .env
-
 set -e
 
 # Путь к файлу pg_hba.conf, поскольку он может отличаться в зависимости от версии PostgreSQL
