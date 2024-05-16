@@ -229,5 +229,5 @@
   become: yes
   tasks:
     - name: Run the bot script
-      ansible.builtin.command: /tg_project/venv/bin/python3 /tg_project/bot/main.py
+      ansible.builtin.command: /tg_project/venv/bin/python3 /tg_project/bot/bot.py
       become: yes
