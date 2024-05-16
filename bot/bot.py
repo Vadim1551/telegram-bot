@@ -2,12 +2,55 @@ import logging
 import re
 import os
 import paramiko
+import psycopg2
 
-from db import DB
+from psycopg2 import Error
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext
 
+
+class DB:
+    def __init__(self, logger):
+        self.__connection = None
+        self.logger = logger
+        load_dotenv()
+        self.__USERNAME = os.getenv("DB_USER")
+        self.__HOST = os.getenv('DB_HOST')
+        self.__PORT = os.getenv('DB_PORT')
+        self.__DB_NAME = os.getenv('DB_NAME')
+        self.__PASSWORD = os.getenv('DB_PASSWORD')
+
+    def executeCommand(self, command):
+        try:
+            self.__connection = psycopg2.connect(user=self.__USERNAME,
+                                          password=self.__PASSWORD,
+                                          host=self.__HOST,
+                                          port=self.__PORT,
+                                          database=self.__DB_NAME)
+
+            cursor = self.__connection.cursor()
+            cursor.execute(command)
+            if command[:6] == "SELECT":
+                data = cursor.fetchall()
+                text = ''
+                for row in data:
+                    text += f"{row}\n"
+                self.logger.info(f"Команда \"{command}\" успешно выполнена")
+                return text
+
+            elif command[:6] == "INSERT":
+                self.__connection.commit()
+                self.logger.info(f"Команда \"{command}\" успешно выполнена")
+                return "Данные успешно записаны"
+        except (Exception, Error) as error:
+            self.logger.error("Ошибка при работе с PostgreSQL: %s", error)
+            return "Произошла ошибка"
+        finally:
+            if self.__connection is not None:
+                cursor.close()
+                self.__connection.close()
+                self.logger.info("Соединение с PostgreSQL закрыто")
 
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
@@ -37,7 +80,7 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-db = DB()
+db = DB(logger)
 
 
 def start(update: Update, context):

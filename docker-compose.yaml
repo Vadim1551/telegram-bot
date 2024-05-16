@@ -25,7 +25,7 @@ services:
 
   db_main:
     container_name: db_main
-    build: ./main_db
+    build: ./db
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
@@ -44,7 +44,7 @@ services:
 
   db_repl:
     container_name: db_repl
-    build: ./replica_db
+    build: ./db_repl
     depends_on:
      - db_main
     environment:
@@ -52,10 +52,10 @@ services:
       - POSTGRES_PASSWORD=${REPL_DB_PASSWORD}
       - POSTGRES_DB=${REPL_DB_NAME}
       - DB_HOST=${DB_HOST}
-    command:
-      - "postgres"
-      - "-c"
-      - "listen_addresses=${REPL_DB_HOST}"
+#    command:
+#      - "postgres"
+#      - "-c"
+#      - "listen_addresses=localhost,${DB_HOST}"
     volumes:
       - pg_repl_data:/var/lib/postgresql/data
     ports:
